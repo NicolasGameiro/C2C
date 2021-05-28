@@ -24,7 +24,7 @@ from matplotlib import rcParams
 rcParams['font.family'] = 'serif'
 rcParams['font.size'] = 12
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-import pygmsh
+#import pygmsh
 
 #Script Appli
 from Reader import *
@@ -73,22 +73,87 @@ class IconLabel(QWidget):
         if final_stretch:
             layout.addStretch()
 
-
 class MainWindow(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
-        self.setMinimumSize(QSize(200, 800)) #Window size width and height
-        width, height = 600, 1200
+        self.initUI()
+        self.Tab_Maillage()
+        self.Tab_Solver()
+        self.Tab_Post()
+        self.body()
+
+    def initUI(self):
+        ### Paramètres de définition de la fenetre principale
+        self.setMinimumSize(QSize(200, 400)) #Window size width and height
+        width, height = 600, 1000
         self.setFixedWidth(width) # setting  the fixed width of window
         self.setFixedHeight(height)  # setting  the fixed width of window
         self.setWindowTitle("C2A - Chaine de Calcul Aerodynamique")
         self.setWindowIcon(QIcon("gears.png"))
 
-        # Create new action
-        newAction = QAction(QIcon('new.png'), '&New', self)
-        newAction.setShortcut('Ctrl+N')
-        newAction.setStatusTip('New document')
-        newAction.triggered.connect(self.newCall)
+    def Tab_Maillage(self):
+        return
+
+    def Tab_Solver(self):
+        self.cb1 = QComboBox()
+        self.cb1.addItems(["JST", "LAX-FRIEDRICH", "CUSP", "ROE", "AUSM", "HLLC", "TURKEL_PREC", "MSW"])
+        self.cb1.currentIndexChanged.connect(self.selectionchange)
+        self.cb2 = QComboBox()
+        self.cb2.addItems(["RUNGE-KUTTA_EXPLICIT", "EULER_IMPLICIT", "EULER_EXPLICIT"])
+        self.cb3 = QComboBox()
+        self.cb3.addItems(
+            ["EULER", "NAVIER_STOKES", "WAVE_EQUATION", "HEAT_EQUATION", "FEM_ELASTICITY", "POISSON_EQUATION"])
+
+        # Creation checkbox
+        self.checkbox1 = QCheckBox("Plot", self)
+        self.checkbox2 = QCheckBox("Reconstruction MUSCL", self)
+        self.checkbox3 = QCheckBox("Acceleration Multigrid", self)
+
+        # Creation d'un slider
+        self.sl1 = QSlider(Qt.Horizontal)
+        self.sl1.setFocusPolicy(Qt.StrongFocus)
+        self.sl1.setTickPosition(QSlider.TicksBothSides)
+        self.sl1.setTickInterval(10)
+        self.sl1.setSingleStep(1)
+        self.sl1.setMinimum(0)
+        self.sl1.setMaximum(10)
+        self.sl1.valueChanged.connect(self.value_changed)
+
+        #solver
+        self.t1 = QLineEdit()
+        self.t2 = QLineEdit()
+        self.t3 = QLineEdit()
+        self.t4 = QLineEdit()
+        self.t5 = QLineEdit()
+
+        self.te = QTextEdit()
+
+        #solver
+        self.l0 = QLabel('Solver :')
+        self.l1 = QLabel('Choix du schéma spacial :', self)
+        self.l2 = QLabel('Choix du schéma temporel :', self)
+        self.l3 = QLabel('Entrer un CFL :', self)
+        self.l4 = QLabel('CFL Choisi :' + str(self.sl1.value()), self)
+        self.l5 = QLabel('Mach Number :')
+        self.l6 = QLabel('FREESTREAM_PRESSURE :')
+        self.l7 = QLabel('FREESTREAM_Temperature :')
+        self.l8 = QLabel('Charger un fichier config :')
+
+        #Progressbar
+        self.bar = QProgressBar()
+        self.bar.setValue(0)
+        self.bar.setMaximum(100)
+
+        # solver
+        self.Load_cfg = QPushButton("Charger un config .cfg")
+        self.Load_cfg.clicked.connect(self.getConfig)
+        self.Launch2 = QPushButton("Lancer SU2")
+        self.Launch2.clicked.connect(self.invoke_process_popen_poll_live)
+
+    def Tab_Post(self):
+        return
+
+    def body(self):
 
         # Create new action
         openAction = QAction(QIcon('open.png'), '&Open', self)
@@ -106,7 +171,6 @@ class MainWindow(QMainWindow):
         # Create menu bar and add action
         menuBar = self.menuBar()
         fileMenu = menuBar.addMenu('&File')
-        fileMenu.addAction(newAction)
         fileMenu.addAction(openAction)
         fileMenu.addAction(exitAction)
         menuBar.addMenu('Parameters')
@@ -118,35 +182,8 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.statusBar)
         self.statusBar.showMessage("Current Folder Location :" + os.getcwd())
 
-        #Progressbar
-        self.bar = QProgressBar()
-        self.bar.setValue(0)
-        self.bar.setMaximum(100)
 
-        # Creation ComboBox
-        #solver
-        self.cb1 = QComboBox()
-        self.cb1.addItems(["JST","LAX-FRIEDRICH","CUSP","ROE","AUSM","HLLC","TURKEL_PREC","MSW"])
-        self.cb1.currentIndexChanged.connect(self.selectionchange)
-        self.cb2 = QComboBox()
-        self.cb2.addItems(["RUNGE-KUTTA_EXPLICIT","EULER_IMPLICIT","EULER_EXPLICIT"])
-        self.cb3 = QComboBox()
-        self.cb3.addItems(["EULER", "NAVIER_STOKES","WAVE_EQUATION", "HEAT_EQUATION", "FEM_ELASTICITY","POISSON_EQUATION"])
 
-        # Creation checkbox
-        self.checkbox1 = QCheckBox("Plot", self)
-        self.checkbox2 = QCheckBox("Reconstruction MUSCL", self)
-        self.checkbox3 = QCheckBox("Acceleration Multigrid", self)
-
-        # Creation d'un slider
-        self.sl1 = QSlider(Qt.Horizontal)
-        self.sl1.setFocusPolicy(Qt.StrongFocus)
-        self.sl1.setTickPosition(QSlider.TicksBothSides)
-        self.sl1.setTickInterval(10)
-        self.sl1.setSingleStep(1)
-        self.sl1.setMinimum(0)
-        self.sl1.setMaximum(10)
-        self.sl1.valueChanged.connect(self.value_changed)
 
         # Creation des labels
         #maillage
@@ -154,16 +191,7 @@ class MainWindow(QMainWindow):
         self.l12 = QLabel("Nombre d'element :")
         self.l16 = QLabel('Charger un maillage : ')
 
-        #solver
-        self.l0 = QLabel('Solver :')
-        self.l1 = QLabel('Choix du schéma spacial :', self)
-        self.l2 = QLabel('Choix du schéma temporel :', self)
-        self.l3 = QLabel('Entrer un CFL :', self)
-        self.l4 = QLabel('CFL Choisi :' + str(self.sl1.value()), self)
-        self.l5 = QLabel('Mach Number :')
-        self.l6 = QLabel('FREESTREAM_PRESSURE :')
-        self.l7 = QLabel('FREESTREAM_Temperature :')
-        self.l8 = QLabel('Charger un fichier config :')
+
 
 
         # Creation des boutons
@@ -172,13 +200,7 @@ class MainWindow(QMainWindow):
         self.Load_mesh.clicked.connect(self.getMesh)
         self.Launch1 = QPushButton("Lancer GMSH")
         self.Launch1.clicked.connect(self.Click_gmsh)
-        #solver
-        self.b1 = QPushButton("Lancer la simu")
-        self.b1.clicked.connect(self.Click1)
-        self.Load_cfg = QPushButton("Charger un config .cfg")
-        self.Load_cfg.clicked.connect(self.getFile)
-        self.Launch2 = QPushButton("Lancer SU2")
-        self.Launch2.clicked.connect(self.invoke_process_popen_poll_live)
+
         #post
         self.Launch3 = QPushButton("Lancer PARAVIEW")
         self.Launch3.clicked.connect(self.Click_paraview)
@@ -189,20 +211,7 @@ class MainWindow(QMainWindow):
         self.t12 = QLineEdit()
         self.t13 = QLineEdit()
 
-        #solver
-        self.t1 = QLineEdit()
-        self.t2 = QLineEdit()
-        self.t3 = QLineEdit()
-        self.t4 = QLineEdit()
-        self.t5 = QLineEdit()
 
-        self.te = QTextEdit()
-
-        #ProgressBar
-        self.pbar = QProgressBar(self)
-        self.pbar.setGeometry(30, 40, 200, 25)
-        self.timer = QBasicTimer()
-        self.step = 0
 
         #List
         self.list = QListView()
@@ -284,27 +293,33 @@ class MainWindow(QMainWindow):
         vbox2.addWidget(IconLabel("fa.wrench", "Choix du solver :"))
         #vbox2.addWidget(self.l0)
         vbox2.addWidget(self.cb3)
+        #choix schema spacial
         vbox2.addWidget(self.l1)
         vbox2.addWidget(self.cb1)
-        vbox2.addStretch()
+        #Choix schéma temporel
         vbox2.addWidget(self.l2)
         vbox2.addWidget(self.cb2)
-        vbox2.addStretch()
+        ### CL
+        #Mach
+        vbox2.addWidget(self.l5)
+        vbox2.addWidget(self.t2)
+        #Pressure
+        vbox2.addWidget(self.l6)
+        vbox2.addWidget(self.t3)
+        #Temp
+        vbox2.addWidget(self.l7)
+        vbox2.addWidget(self.t4)
+        #Choix CFL
         vbox2.addWidget(self.l3)
         vbox2.addWidget(self.t1)
-        vbox2.addWidget(self.b1)
         vbox2.addStretch()
-        vbox2.addWidget(self.l4)
-        vbox2.addWidget(self.sl1)
+        #CFL avec slider
+        #vbox2.addWidget(self.l4)
+        #vbox2.addWidget(self.sl1)
         vbox2.addWidget(self.l8)
         vbox2.addWidget(self.t5)
         vbox2.addWidget(self.Load_cfg)
-        vbox2.addWidget(self.l5)
-        vbox2.addWidget(self.t2)
-        vbox2.addWidget(self.l6)
-        vbox2.addWidget(self.t3)
-        vbox2.addWidget(self.l7)
-        vbox2.addWidget(self.t4)
+
         vbox2.addWidget(self.checkbox1)
         vbox2.addWidget(self.checkbox2)
         vbox2.addWidget(self.checkbox3)
@@ -369,6 +384,19 @@ class MainWindow(QMainWindow):
         self.statusBar.showMessage("Maillage chargé : " + self.filename)
         self.t5.setText(self.filename)
 
+    def getConfig(self):
+        """ This function will get the address of the file location
+        """
+        self.filename = QFileDialog.getOpenFileName(filter="cfg (*.cfg)")[0] #argument : filter="csv (*.csv)"
+        print("File :", self.filename)
+        self.statusBar.showMessage("Maillage chargé : " + self.filename)
+        self.t5.setText(self.filename)
+        ###Permet changer la valeur d'une ComboBox
+        text = "JST"
+        index = self.cb1.findText(text, QtCore.Qt.MatchFixedString)
+        if index >= 0:
+            self.cb1.setCurrentIndex(index)
+
     def getITER(self):
         filename = self.t11.text()
         with open(filename) as f:
@@ -409,17 +437,6 @@ class MainWindow(QMainWindow):
             print(self.cb1.itemText(count))
         print("Current index", i, "selection changed ", self.cb1.currentText())
 
-    def Click1(self):
-        check = self.checkbox1.isChecked()
-        print(check)
-        # inputCFL = float(self.t1.text())
-        inputCFL = self.sl1.value()
-        print(self.sl1.value())
-        print("Run Simulation")
-        self.statusBar.showMessage('Run Simulation')
-        simu(m=201, CFL=inputCFL, plot=check)  # CFL = 0.8
-        self.statusBar.showMessage('End Simulation')
-
     def Click_gmsh(self):
         self.statusBar.showMessage('Lancement de GMSH')
         os.system("C://Users//Gameiro//Documents//CFD//gmsh-4.8.4-Windows64//gmsh.exe")
@@ -439,9 +456,6 @@ class MainWindow(QMainWindow):
         self.statusBar.showMessage('Lancement de PARAVIEW')
         file = 'C:\\Program Files\\ParaView 5.9.1-Windows-Python3.8-msvc2017-64bit\\bin\\paraview.exe'
         os.system('"' + file + '"')
-
-    def openCall(self):
-        print('Open')
 
     def newCall(self):
         print('New')
