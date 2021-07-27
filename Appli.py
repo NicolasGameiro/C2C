@@ -9,6 +9,11 @@ Application in pyQt5 to run SU2 Code, gmsh and paraview easily for numerical sim
 Date Creation : 20/05/2021
 Last Update : 27/05/2021
 Don't forget to do : python3 pip freeze > requirement.txt
+Git Commande :
+git add .
+git commit -m "xxx"
+git status
+
 """
 import glob
 import sys
