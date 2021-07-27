@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 """
 Author : GAMEIRO Nicolas
 
@@ -6,6 +8,7 @@ Application in pyQt5 to run SU2 Code, gmsh and paraview easily for numerical sim
 
 Date Creation : 20/05/2021
 Last Update : 27/05/2021
+Don't forget to do : python3 pip freeze > requirement.txt
 """
 import glob
 import sys
@@ -85,9 +88,10 @@ class MainWindow(QMainWindow):
     def initUI(self):
         ### Paramètres de définition de la fenetre principale
         self.setMinimumSize(QSize(200, 400)) #Window size width and height
-        width, height = 600, 1000
-        self.setFixedWidth(width) # setting  the fixed width of window
-        self.setFixedHeight(height)  # setting  the fixed width of window
+        width, height = 400, 600
+        #self.setFixedWidth(width) # setting  the fixed width of window
+        #self.setFixedHeight(height)  # setting  the fixed width of window
+        self.setGeometry(300, 300, width, height)
         self.setWindowTitle("C2A - Chaine de Calcul Aerodynamique")
         self.setWindowIcon(QIcon("gears.png"))
 
@@ -171,28 +175,23 @@ class MainWindow(QMainWindow):
         # Create menu bar and add action
         menuBar = self.menuBar()
         fileMenu = menuBar.addMenu('&File')
+        menuBar.addMenu('&Parameters')
+        menuBar.addMenu('&Tools')
+        menuBar.addMenu('&Help')
         fileMenu.addAction(openAction)
         fileMenu.addAction(exitAction)
-        menuBar.addMenu('Parameters')
-        menuBar.addMenu('Tools')
-        menuBar.addMenu('Help')
+
 
         # Add Status Bar
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
         self.statusBar.showMessage("Current Folder Location :" + os.getcwd())
 
-
-
-
         # Creation des labels
         #maillage
         self.l11 = QLabel("Dimension du maillage :")
         self.l12 = QLabel("Nombre d'element :")
         self.l16 = QLabel('Charger un maillage : ')
-
-
-
 
         # Creation des boutons
         #maillage
@@ -210,8 +209,6 @@ class MainWindow(QMainWindow):
         self.t11 = QLineEdit()
         self.t12 = QLineEdit()
         self.t13 = QLineEdit()
-
-
 
         #List
         self.list = QListView()
@@ -247,15 +244,13 @@ class MainWindow(QMainWindow):
         # Apply the model to the list view
         self.list.setModel(model)
 
-
         #Creation Groupbox
         self.groupbox1 = QGroupBox("Maillage :")
         self.groupbox2 = QGroupBox("Paramètre de simulation numérique :")
         self.groupbox3 = QGroupBox("Post-traitement :")
-        self.groupbox4 = QGroupBox("Mode Rafale")
+        self.groupbox4 = QGroupBox("Mode Rafale :")
         self.groupbox4.setCheckable(True)
         self.groupbox4.setChecked(False)
-
 
         ######### STRUCTURE ############
         ### MAILLAGE
@@ -393,7 +388,7 @@ class MainWindow(QMainWindow):
         self.t5.setText(self.filename)
         ###Permet changer la valeur d'une ComboBox
         text = "JST"
-        index = self.cb1.findText(text, QtCore.Qt.MatchFixedString)
+        index = self.cb1.findText(text, Qt.MatchFixedString)
         if index >= 0:
             self.cb1.setCurrentIndex(index)
 
@@ -429,7 +424,6 @@ class MainWindow(QMainWindow):
     def value_changed(self):
         self.l4.setText('CFL Choisi :' + str(self.sl1.value()))
 
-
     def selectionchange(self, i):
         print("Items in the list are :")
 
@@ -444,6 +438,7 @@ class MainWindow(QMainWindow):
     def Click_su2(self):
         #On doit se deplacer pour se mettre dans le dossier du fichier ou alors on peut mettre dans le fichier config le chemin absolu du fichier maillage
         #on triche :
+        print(os.getcwd())
         os.chdir("C://Users//Gameiro//Documents//CFD//SU2-master//QuickStart")
         print(os.getcwd())
         self.statusBar.showMessage('Lancement de SU2')
